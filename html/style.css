@@ -185,8 +185,8 @@ ul {
 .component-img {
     width: 60px;
     height: 60px;
-    object-fit: contain; /* Normalizuje veľkosť a zachová celý obrázok bez orezania */
-    background-color: transparent; /* Zabezpečí, že pozadie bude priehľadné pre no-bg obrázky */
+    object-fit: contain;
+    background-color: transparent;
     border: 1px solid var(--border-light);
     flex-shrink: 0;
 }
