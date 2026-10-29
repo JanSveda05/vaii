@@ -54,12 +54,15 @@ ul {
     gap: 15px;
 }
 
-.logo {
+.site-logo {
+    height: 35px;
+    width: auto;
+    display: block;
+}
+
+.site-title {
+    font-size: 18px;
     font-weight: bold;
-    border: 1px solid var(--text-color);
-    padding: 8px 12px;
-    font-size: 14px;
-    background-color: var(--card-bg);
 }
 
 .site-title {
