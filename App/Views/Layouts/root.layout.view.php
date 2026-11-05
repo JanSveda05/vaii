@@ -39,7 +39,10 @@
                     Konfigurátor
                 </a>
             </li>
-            <li><a href="#">Katalóg</a></li>
+            <li><a href="<?= $link->url('catalog.index') ?>"
+                   class="<?= (isset($_GET['c']) && strtolower($_GET['c']) === 'catalog') ? 'active' : '' ?>">
+                    Katalóg
+                </a></li>
             <li><a href="#">Komunita</a></li>
             <li><a href="#">Profil</a></li>
         </ul>
