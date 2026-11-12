@@ -2,6 +2,9 @@
 /** @var \App\Models\Component $component */
 /** @var string[] $errors */
 /** @var \Framework\Support\LinkGenerator $link */
+/** @var \App\Models\Category[] $categories */
+
+use \app\Configuration;
 ?>
 <div class="catalog-container">
     <div class="catalog-form-box">
@@ -24,8 +27,15 @@
             </div>
 
             <div class="form-group">
-                <label for="category">Kategória</label>
-                <input type="text" id="category" name="category" class="form-control" value="<?= e($component->getCategory()) ?>" required>
+                <label for="categoryId">Kategória</label>
+                <select id="categoryId" name="categoryId" class="form-control">
+                    <option value="">-- Vyberte kategóriu --</option>
+                    <?php foreach ($categories as $category): ?>
+                        <option value="<?= $category->getId() ?>" <?= $component->getCategoryId() === $category->getId() ? 'selected' : '' ?>>
+                            <?= e($category->getName()) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
             </div>
 
             <div class="form-group">
@@ -46,17 +56,17 @@
             <div class="form-group">
                 <label for="image">Obrázok komponentu</label>
                 <?php if ($component->getImage()): ?>
-                    <div style="margin-bottom: 8px;">
-                        <img src="<?= $link->asset('images/' . $component->getImage()) ?>" alt="" style="max-height: 80px; border: 1px solid var(--border-light); padding: 2px;">
-                        <span style="font-size: 12px; color: var(--text-muted); display: block;">Aktuálny obrázok: <?= e($component->getImage()) ?></span>
+                    <div class="form-image-preview">
+                        <img src="<?= $link->asset(Configuration::UPLOAD_URL . $component->getImage()) ?>" alt="" class="form-image-thumbnail">
+                        <span class="form-image-text">Aktuálny obrázok: <?= e($component->getImage()) ?></span>
                     </div>
                 <?php endif; ?>
                 <input type="file" id="image" name="image" class="form-control" accept="image/*">
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">Uložiť</button>
-                <a href="<?= $link->url('catalog.index') ?>" class="btn btn-secondary" style="padding: 10px 20px;">Späť</a>
+                <button type="submit" class="btn btn-primary btn-form-action">Uložiť</button>
+                <a href="<?= $link->url('catalog.index') ?>" class="btn btn-secondary btn-form-action">Späť</a>
             </div>
         </form>
     </div>

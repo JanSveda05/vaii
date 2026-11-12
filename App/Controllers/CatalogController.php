@@ -2,10 +2,12 @@
 namespace App\Controllers;
 
 use App\Models\Component;
+use App\Models\Category;
 use Framework\Core\BaseController;
 use Framework\Http\HttpException;
 use Framework\Http\Request;
 use Framework\Http\Responses\Response;
+use App\Configuration;
 
 class CatalogController extends BaseController
 {
@@ -17,13 +19,21 @@ class CatalogController extends BaseController
 
     public function add(Request $request): Response
     {
-        return $this->html(['component' => new Component(), 'errors' => []], 'form');
+        return $this->html([
+            'component' => new Component(),
+            'categories' => Category::getAll(orderBy: '`name` ASC'),
+            'errors' => []
+        ], 'form');
     }
 
     public function edit(Request $request): Response
     {
-        $component = $this->getComponentOr404((int)$request->value('id'));
-        return $this->html(['component' => $component, 'errors' => []], 'form');
+        $component = $this->findComponent((int)$request->value('id'));
+        return $this->html([
+            'component' => $component,
+            'categories' => Category::getAll(orderBy: '`name` ASC'),
+            'errors' => []
+        ], 'form');
     }
 
     public function save(Request $request): Response
@@ -33,25 +43,28 @@ class CatalogController extends BaseController
         }
 
         $id = (int)$request->post('id');
-        $component = $id > 0 ? $this->getComponentOr404($id) : new Component();
+        $component = $id > 0 ? $this->findComponent($id) : new Component();
 
         $component->setFromRequest($request);
 
-        if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            $fileTmpPath = $_FILES['image']['tmp_name'];
-            $fileName = $_FILES['image']['name'];
+        $categoryId = $request->post('categoryId');
+        $component->setCategoryId($categoryId !== '' && $categoryId != null ? (int)$categoryId : null);
 
-            $cleanFileName = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $fileName);
-            $uploadFileDir = __DIR__ . '/../../public/images/';
+        $file = $request->file('image');
 
-            if (!is_dir($uploadFileDir)) {
-                mkdir($uploadFileDir, 0755, true);
+        if ($file !== null && $file->getName() !== '') {
+            $fileName = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $file->getName());
+
+            if (!is_dir(Configuration::UPLOAD_DIR)) {
+                mkdir(Configuration::UPLOAD_DIR, 0755, true);
             }
-
-            $dest_path = $uploadFileDir . $cleanFileName;
-
-            if(move_uploaded_file($fileTmpPath, $dest_path)) {
-                $component->setImage($cleanFileName);
+            if (!$file->store(Configuration::UPLOAD_DIR . $fileName)) {
+                throw new HttpException(500, 'Nepodarilo sa uložiť súbor.');
+            }
+            $oldFileName = $component->getImage();
+            $component->setImage($fileName);
+            if ($oldFileName !== null && is_file(Configuration::UPLOAD_DIR . $oldFileName)) {
+                unlink(Configuration::UPLOAD_DIR . $oldFileName);
             }
         }
 
@@ -64,7 +77,11 @@ class CatalogController extends BaseController
         }
 
         if (count($errors) > 0) {
-            return $this->html(['component' => $component, 'errors' => $errors], 'form');
+            return $this->html([
+                'component' => $component,
+                'categories' => Category::getAll(orderBy: '`name` ASC'),
+                'errors' => $errors
+            ], 'form');
         }
 
         $component->save();
@@ -77,13 +94,13 @@ class CatalogController extends BaseController
             throw new HttpException(405);
         }
 
-        $component = $this->getComponentOr404((int)$request->post('id'));
+        $component = $this->findComponent((int)$request->post('id'));
         $component->delete();
 
         return $this->redirect($this->url('catalog.index'));
     }
 
-    private function getComponentOr404(int $id): Component
+    private function findComponent(int $id): Component
     {
         $component = Component::getOne($id);
         if ($component === null) {
